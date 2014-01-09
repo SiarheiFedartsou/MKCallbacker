@@ -120,7 +120,13 @@
         
         NSMutableDictionary* args = [NSMutableDictionary dictionaryWithObjects:arguments forKeys:argumentNames];
         
-        callback(selector, [NSDictionary dictionaryWithDictionary:args]);
+        NSMethodSignature* signature = [anInvocation methodSignature];
+        if (signature) {
+            
+        }
+        
+        
+        callback(selector, [NSDictionary dictionaryWithDictionary:args], NULL);
     }
 }
 

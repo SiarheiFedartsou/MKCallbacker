@@ -67,14 +67,14 @@ typedef struct {
     
     id<TestProtocol> test = (id<TestProtocol>)callbacker;
 
-    [callbacker setCallback:^(SEL selector, NSDictionary *arguments) {
+    [callbacker setCallback:^(SEL selector, NSDictionary *arguments, NSValue** returnValue) {
         XCTAssertTrue(selector == @selector(noArguments), @"Selector in callback isn't equal to called selector");
         
         XCTAssertTrue([arguments count] == 0, @"Arguments count should be zero for methods with no arguments");
     } forSelector:@selector(noArguments)];
     [test noArguments];
     
-    [callbacker setCallback:^(SEL selector, NSDictionary *arguments) {
+    [callbacker setCallback:^(SEL selector, NSDictionary *arguments, NSValue** returnValue) {
         XCTAssertTrue(selector == @selector(oneArgument:), @"Selector in callback isn't equal to called selector");
         
         XCTAssertTrue([arguments count] == 1, @"Arguments count should be zero for methods with no arguments");
@@ -85,7 +85,7 @@ typedef struct {
     } forSelector:@selector(oneArgument:)];
     [test oneArgument:1];
     
-    [callbacker setCallback:^(SEL selector, NSDictionary *arguments) {
+    [callbacker setCallback:^(SEL selector, NSDictionary *arguments, NSValue** returnValue) {
         XCTAssertTrue(selector == @selector(twoArguments:arg:), @"Selector in callback isn't equal to called selector");
         
         XCTAssertTrue([arguments count] == 2, @"Arguments count should be zero for methods with no arguments");
@@ -109,7 +109,7 @@ typedef struct {
     
     id<TestProtocol> test = (id<TestProtocol>)callbacker;
 
-    [callbacker setCallback:^(SEL selector, NSDictionary *arguments) {
+    [callbacker setCallback:^(SEL selector, NSDictionary *arguments, NSValue** returnValue) {
         MK_STRUCT_ARGUMENT(TestStruct, testStruct);
         XCTAssertTrue(testStruct.x == 10 && testStruct.ts.y == 20 && testStruct.ts.z == 30, @"Struct test failed");
     } forSelector:@selector(testStruct:)];
@@ -131,7 +131,7 @@ typedef struct {
     XCTAssertTrue([test respondsToSelector:@selector(test2NoArguments)], @"Class instance should responds to protocol selectors");
     XCTAssertFalse([test respondsToSelector:NSSelectorFromString(@"nonExistsMethod")], @"Class instance shouldn't responds to non exists selectors");
     
-    MKMethodCallCallback callback = ^(SEL selector, NSDictionary *arguments) {
+    MKMethodCallCallback callback = ^(SEL selector, NSDictionary *arguments, NSValue** returnValue) {
         XCTAssertTrue(selector == @selector(noArguments) || selector == @selector(test2NoArguments), @"Selector in callback isn't equal to called selector");
         
         XCTAssertTrue([arguments count] == 0, @"Arguments count should be zero for methods with no arguments");

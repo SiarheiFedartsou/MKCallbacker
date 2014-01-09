@@ -14,7 +14,7 @@
     argument_type argument_name; \
     [arguments_dict[@#argument_name] getValue:&argument_name];
 
-typedef void (^MKMethodCallCallback)(SEL selector, NSDictionary* arguments);
+typedef void (^MKMethodCallCallback)(SEL selector, NSDictionary* arguments, __autoreleasing NSValue** returnValue);
 
 @interface MKCallbacker : NSObject
 - (instancetype)initWithProtocol:(Protocol*)protocol;
