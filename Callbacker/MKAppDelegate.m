@@ -11,8 +11,23 @@
 #import "MKCallbacker.h"
 
 
+@interface Cell : UITableViewCell
+
+@end
+
+@implementation Cell
+
+- (void) dealloc
+{
+    NSLog(@"xxx");
+}
+
+@end
 
 @implementation MKAppDelegate
+{
+    MKCallbacker* tableViewCallbacker;
+}
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
@@ -23,6 +38,22 @@
     [self.window makeKeyAndVisible];
     
     
+    tableViewCallbacker = [[MKCallbacker alloc] initWithProtocol:@protocol(UITextFieldDelegate)];
+    [tableViewCallbacker setCallback:(MKMethodCallCallback)^(SEL selector, NSDictionary *arguments, BOOL *returnValue) {
+        *returnValue = YES;
+    } forSelector:@selector(textFieldShouldBeginEditing:)];
+    [tableViewCallbacker setCallback:(MKMethodCallCallback)^(SEL selector, NSDictionary *arguments, BOOL *returnValue) {
+        NSLog(@"xxxxxx");
+    } forSelector:@selector(textFieldDidBeginEditing:)];
+    
+    
+    
+    UITextField* textField = [[UITextField alloc] initWithFrame:CGRectMake(0, 120, 320, 80)];
+    textField.text = @"xx";
+  //  [tableView setDelegate:(id<UITableViewDelegate>)tableViewCallbacker];
+    [textField setDelegate:(id<UITextFieldDelegate>)tableViewCallbacker];
+  //  [tableView reloadData];
+    [self.window addSubview:textField];
     
     return YES;
 }

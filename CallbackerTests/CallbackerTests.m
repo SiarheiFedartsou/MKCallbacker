@@ -34,6 +34,13 @@ typedef struct {
 - (void) test2NoArguments;
 @end
 
+@protocol TestProtocol3 <NSObject>
+- (NSUInteger) testReturn;
+- (TestStruct) testReturnStruct;
+- (NSString*) testReturnObject;
+- (id) testReturnNil;
+@end
+
 @interface CallbackerTests : XCTestCase
 
 @end
@@ -67,14 +74,14 @@ typedef struct {
     
     id<TestProtocol> test = (id<TestProtocol>)callbacker;
 
-    [callbacker setCallback:^(SEL selector, NSDictionary *arguments, NSValue** returnValue) {
+    [callbacker setCallback:^(SEL selector, NSDictionary *arguments, void* returnValue) {
         XCTAssertTrue(selector == @selector(noArguments), @"Selector in callback isn't equal to called selector");
         
         XCTAssertTrue([arguments count] == 0, @"Arguments count should be zero for methods with no arguments");
     } forSelector:@selector(noArguments)];
     [test noArguments];
     
-    [callbacker setCallback:^(SEL selector, NSDictionary *arguments, NSValue** returnValue) {
+    [callbacker setCallback:^(SEL selector, NSDictionary *arguments, void* returnValue) {
         XCTAssertTrue(selector == @selector(oneArgument:), @"Selector in callback isn't equal to called selector");
         
         XCTAssertTrue([arguments count] == 1, @"Arguments count should be zero for methods with no arguments");
@@ -85,7 +92,7 @@ typedef struct {
     } forSelector:@selector(oneArgument:)];
     [test oneArgument:1];
     
-    [callbacker setCallback:^(SEL selector, NSDictionary *arguments, NSValue** returnValue) {
+    [callbacker setCallback:^(SEL selector, NSDictionary *arguments, void* returnValue) {
         XCTAssertTrue(selector == @selector(twoArguments:arg:), @"Selector in callback isn't equal to called selector");
         
         XCTAssertTrue([arguments count] == 2, @"Arguments count should be zero for methods with no arguments");
@@ -109,7 +116,7 @@ typedef struct {
     
     id<TestProtocol> test = (id<TestProtocol>)callbacker;
 
-    [callbacker setCallback:^(SEL selector, NSDictionary *arguments, NSValue** returnValue) {
+    [callbacker setCallback:^(SEL selector, NSDictionary *arguments, void* returnValue) {
         MK_STRUCT_ARGUMENT(TestStruct, testStruct);
         XCTAssertTrue(testStruct.x == 10 && testStruct.ts.y == 20 && testStruct.ts.z == 30, @"Struct test failed");
     } forSelector:@selector(testStruct:)];
@@ -131,7 +138,7 @@ typedef struct {
     XCTAssertTrue([test respondsToSelector:@selector(test2NoArguments)], @"Class instance should responds to protocol selectors");
     XCTAssertFalse([test respondsToSelector:NSSelectorFromString(@"nonExistsMethod")], @"Class instance shouldn't responds to non exists selectors");
     
-    MKMethodCallCallback callback = ^(SEL selector, NSDictionary *arguments, NSValue** returnValue) {
+    MKMethodCallCallback callback = ^(SEL selector, NSDictionary *arguments, void* returnValue) {
         XCTAssertTrue(selector == @selector(noArguments) || selector == @selector(test2NoArguments), @"Selector in callback isn't equal to called selector");
         
         XCTAssertTrue([arguments count] == 0, @"Arguments count should be zero for methods with no arguments");
@@ -142,6 +149,55 @@ typedef struct {
     
     [test noArguments];
     [test test2NoArguments];
+}
+
+- (void)testReturnValue
+{
+    MKCallbacker* callbacker = [[MKCallbacker alloc] initWithProtocol:@protocol(TestProtocol3)];
+    
+    id<TestProtocol3> test = (id<TestProtocol3>)callbacker;
+    
+    [callbacker setCallback:(MKMethodCallCallback)^(SEL selector, NSDictionary *arguments, NSUInteger* returnValue) {
+        if (returnValue) {
+            *returnValue = 10;
+        }
+    } forSelector:@selector(testReturn)];
+    
+    XCTAssertTrue([test testReturn] == 10, @"Return value isn't right");
+    
+    
+    
+    [callbacker setCallback:(MKMethodCallCallback)^(SEL selector, NSDictionary *arguments, TestStruct* returnValue) {
+        if (returnValue) {
+            TestStruct testStruct;
+            testStruct.x = 10;
+            testStruct.ts.y = 20;
+            testStruct.ts.z = 30;
+            
+            *returnValue = testStruct;
+        }
+    } forSelector:@selector(testReturnStruct)];
+    
+    TestStruct testStruct = [test testReturnStruct];
+    XCTAssertTrue(testStruct.x == 10 && testStruct.ts.y == 20 && testStruct.ts.z == 30, @"Return value isn't right");
+    
+    
+    [callbacker setCallback:(MKMethodCallCallback)^(SEL selector, NSDictionary *arguments, NSString** returnValue) {
+        if (returnValue) {
+            *returnValue = @"test";
+        }
+    } forSelector:@selector(testReturnObject)];
+    
+    XCTAssertTrue([[test testReturnObject] isEqualToString:@"test"], @"Return value isn't right");
+    
+    
+    [callbacker setCallback:(MKMethodCallCallback)^(SEL selector, NSDictionary *arguments, id* returnValue) {
+        if (returnValue) {
+            *returnValue = nil;
+        }
+    } forSelector:@selector(testReturnNil)];
+    
+    XCTAssertTrue([test testReturnNil] == nil, @"Return value isn't right");
 }
 
 @end

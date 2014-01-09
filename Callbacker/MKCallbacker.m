@@ -54,8 +54,10 @@
         
         Protocol* arg = protocol;
         do {
+            class_addProtocol([self class], arg);
+            
             unsigned int methodCount = 0;
-            struct objc_method_description* cMethods = protocol_copyMethodDescriptionList(arg, YES, YES, &methodCount);
+            struct objc_method_description* cMethods = protocol_copyMethodDescriptionList(arg, NO, YES, &methodCount);
             
             
             for (NSUInteger methodIdx = 0; methodIdx < methodCount; methodIdx++) {
@@ -120,13 +122,16 @@
         
         NSMutableDictionary* args = [NSMutableDictionary dictionaryWithObjects:arguments forKeys:argumentNames];
         
+
         NSMethodSignature* signature = [anInvocation methodSignature];
-        if (signature) {
-            
+        if ([signature methodReturnLength]) {
+            void* returnValue = malloc([signature methodReturnLength]);
+            callback(selector, [NSDictionary dictionaryWithDictionary:args], returnValue);
+            [anInvocation setReturnValue:returnValue];
+            free(returnValue);
+        } else {
+            callback(selector, [NSDictionary dictionaryWithDictionary:args], NULL);
         }
-        
-        
-        callback(selector, [NSDictionary dictionaryWithDictionary:args], NULL);
     }
 }
 
@@ -135,8 +140,13 @@
         return YES;
     } else {
         NSValue* selectorValue = [NSValue valueWithSelector:aSelector];
-        return methods_[selectorValue] != nil;
+        return callbacks_[selectorValue] != nil;
     }
+}
+
+- (void) dealloc
+{
+    NSLog(@"dealloc");
 }
 
 @end
